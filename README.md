@@ -1,6 +1,36 @@
 # UK_AccidentData
 
+For our project this summer, we will predict the relative injury severity of an automobile accident as grouped into three categories, slight, severe, and Fatal.  There are several business use cases where this prediction could be used to create business value.  When insurance companies first get notice of a loss, they hold an amount of money towards the payment of the future expense of the claim.  One common practice is to hold an average reserve.  This causes fluctuations in the balance sheet as claims age and bills begin to come in.  A more accurate estimate up front, such as having different beginning reserves for each of three levels would cause less re-estimation, balance sheet stability, and business value.  Additional uses would be in fraud detection and advice to drivers about how to avoid severe injury or fatality.
 
+The data we will use is collected by the British government, by the police, through a standardized form.  It is available for multiple years with our current plans to use 2005-2014 as a training set.
+
+Originally, our idea was to merge as much data as we could. Through the UK website, we found over 40 files we intended to merge.  These files spanned from 2005 to 2016 with 7 different types.  After going through the files, we found many different issues with different file types. This included some files that were specifically for fatalities, some files without a key to match on and some files that had a one-to-many relationship. Due to these issues, we decided to solely focus on the accidents dataset and do some feature creation on data points we found interesting.
+
+After merging each year of our data, from 2009 to 2016, we knew we needed a method to split our data into sets. We decided to hold out 2015 and 2016 for our final model.  We read that there was a change in the way accidents were reported in 2016, so we held 2 years out in case 2016’s changes posed an issue with prediction.  After removing 2015 & 2016 for our holdout, we partitioned the rest of our data into 70% for a training set and 30% for a testing data set.
+
+As was explained previously, we had many files that didn’t have a one to one relationship between the records.  The accident level file was chosen as our exposure base for prediction, but we felt there were other variables from the vehicle and casualty file that might provide additional predictive lift.  
+
+The method for feature creation began with brainstorming what information we thought would provide additional predictive lift.  We then looked through the data fields available in the other files to see if we could extend our brainstormed list.  After we had compiled this list, we eliminated those not available and had to decide how to roll the available information into an accident level predictor.  For example, we felt that children in the car might have a different probability of injury than adults.  Age of the passengers IS present, but there are many passenger records for each accident.  We decided to accomplish this by creating indicators.  If any of the participants were under a certain age, we added a flag to that accident.  We used this same method for other indicators, such as:  Was there a motorcycle involved?  Was one of the vehicles stationary at time of accident?  Was one of the vehicles hit one the front/side/rear?  
+
+These indicator variables were created, summarized to the accident level, and merged into our main accident data frame.
+
+We tried three different model types to predict severity:  Random Forest, Penalized Multinomial Regression, and one-vs-rest logistic regression.  The first two were available in the caret package, but the third required some additional thought...so we’ll spend some additional time on that one.  Before we get to that, I’ll focus on the first two.  
+
+Since we had imbalanced predictors, it was necessary to downsample (through the caret package) to handle the three classes.  Slight has roughly 85% of the exposure, with Fatal at only 2%.  This meant that our initial model building attempts had everything predicting as Slight…with 85% accuracy!  Woot!
+
+After downsampling, we got numbers that were more reasonable (although less overall accuracy).  For RF and Penalized Multinomial Regression (run through the multinom package) we ran 5 fold cross validation.  Why 5?  Because it didn’t make our computers blow up.  The mtry for RF were selected as plus and minus one from the square root of the number of predictors.  For Penalized Multinomial Regression, we left the default decay parameters.
+
+Multinomial logistic regression was completely new to us, but we figured out a method to help us create this model. To begin, we knew we would need to create two separate logistic models that would mesh together for a final model.  The first model we created was to predict fatal vs. non-fatal.  The variables we used in this model were the same as we used in random forest and penalized multinomial regression. After fitting the model and running the prediction on our training data, we used the coord function in the pROC library to optimize sensitivity. For fatal vs. non-fatal, we found that sensitivity was optimized with a probability cutoff of 0.9871327.
+
+Next, we created a model to predict serious vs. non-serious.  Just as we did in the previous model, we use the same variables. After fitting our model and running prediction on the training, we optimized for sensitivity.  For this second model, our sensitivity optimized probability cutoff was 0.8672438.
+
+This finalized our two smaller models.  From here, we needed a way to put them together.  To do this, we obtained the probability vectors for each model we ran on the training set. We then created a vector that said if the probability for our fatal prediction was less than our optimized cutoff for fatal, then we’re identifying it as a fatal severity.  Otherwise, if the probability for serious was less than our optimized cutoff for serious, then we’re identifying it as a serious severity. Anything left would be classified as a slight severity.
+
+Running these predictions through a confusion matrix with the actual values gave us our final metrics for the training data.  We get an accuracy of about 51.5%
+
+The results from our confusion matrix are percentages of the overall number of observations.  Since our models are all multinomial, there’s no clear-cut way to choose a model.  Because we’re interested in having the best accuracy for fatal and serious, in that order, and our accuracy is relatively consistent over each model, we chose to focus on those specific accuracies.
+
+So…what did we learn during this?  The biggest learning came from trying new methods to predict multi class responses.  We grappled with the difficulties of how to pick the “best model” from a multi-class prediction.  We gained additional experience dealing with large datasets on small machines.  And we had fun creating new features, merging datasets, and exploring our data.  If we would have had more time, we would have looked into an ensemble approach to putting the three methods together to see if we could get better results.  We also would have extended our selected model into a simulated business case…to estimate business value.  Overall, we enjoyed trying new things and working as a team.
 
 Shiny App
 
