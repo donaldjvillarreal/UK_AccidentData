@@ -1,0 +1,74 @@
+---
+title: "Build the NZV dataset"
+author: "Richard Gower"
+date: "July 7, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## get the lookup data
+
+Read in the description tables 
+
+```{r dataPrep}
+# read original file
+
+
+library(caret)
+load(file="datafiles\\accidents.raw.rda")
+acc = accidents.raw
+rm(accidents.raw)
+load(file="datafiles\\casualties.raw.rda")
+cas = casualties.raw
+rm(casualties.raw)
+load(file="datafiles\\vehicles.raw.rda")
+veh = vehicles.raw
+rm(vehicles.raw)
+
+# process accidents
+x = nearZeroVar(acc, saveMetrics = TRUE)
+
+tempNZV = x[x[,"zeroVar"] + x[,"nzv"] > 0, ]
+tempNZV$TableName = "accidents"
+tempNZV$FieldName = rownames(tempNZV)
+tempNZV = tempNZV[, c("TableName", "FieldName", "nzv", "freqRatio", "percentUnique")]
+
+fieldNZV = tempNZV
+
+# process casualties
+x = nearZeroVar(cas, saveMetrics = TRUE)
+
+tempNZV = x[x[,"zeroVar"] + x[,"nzv"] > 0, ]
+tempNZV$TableName = "casualties"
+tempNZV$FieldName = rownames(tempNZV)
+tempNZV = tempNZV[, c("TableName", "FieldName", "nzv", "freqRatio", "percentUnique")]
+
+fieldNZV = rbind(fieldNZV, tempNZV)
+
+# process vehicles
+x = nearZeroVar(veh, saveMetrics = TRUE)
+
+tempNZV = x[x[,"zeroVar"] + x[,"nzv"] > 0, ]
+tempNZV$TableName = "vehicles"
+tempNZV$FieldName = rownames(tempNZV)
+tempNZV = tempNZV[, c("TableName", "FieldName", "nzv", "freqRatio", "percentUnique")]
+
+fieldNZV = rbind(fieldNZV, tempNZV)
+
+save(fieldNZV, file='datafiles\\fieldNZV.rda')
+
+```
+```{r}
+#rm(lookups)
+rm(descriptionsTemp)
+rm(readSheet)
+rm(wb)
+rm(ws)
+rm(file)
+rm(sheetNum)
+rm(wd)
+```
+

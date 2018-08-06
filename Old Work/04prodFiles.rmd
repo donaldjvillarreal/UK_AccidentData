@@ -1,0 +1,36 @@
+---
+title: "prodFiles"
+author: "RIchard Gower"
+date: "July 7, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+
+```{r cars}
+
+load(file="datafiles\\accidents.clean.rda")
+load(file="datafiles\\casualties.clean.rda")
+load(file="datafiles\\vehicles.clean.rda")
+load(file="datafiles\\makeModel.clean.rda")
+
+accidents = accidents.clean
+casualties = casualties.clean
+vehicles = vehicles.clean
+makeModel = makeModel.clean
+
+save(accidents, file="datafiles\\accidents.rda")
+save(casualties, file="datafiles\\casualties.rda")
+save(vehicles, file="datafiles\\vehicles.rda")
+save(makeModel, file="datafiles\\makeModel.rda")
+
+rm(accidents.clean)
+rm(casualties.clean)
+rm(vehicles.clean)
+rm(makeModel.clean)
+```

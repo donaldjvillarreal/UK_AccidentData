@@ -1,0 +1,139 @@
+---
+title: "Untitled"
+author: "Wright, Aaron"
+date: "July 7, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+
+
+```{r}
+# Relabel the 'Accident_Severity' categories
+accidents$Accident_Severity <- factor(accidents$Accident_Severity,
+                                       levels= c(1,2,3),
+                                       labels= c("Fatal", "Serious", "Slight"))
+levels(accidents$Accident_Severity)
+```
+
+```{r}
+# Relabel the X1st_Road_Class
+accidents$X1st_Road_Class <- factor(accidents$X1st_Road_Class,
+                                       levels= c(1,2,3, 4, 5, 6),
+                                       labels= c("Motorway", "A(M)", "A", "B", "C", "Unclassified"))
+levels(accidents$X1st_Road_Class)
+```
+
+```{r}
+# Relabel the Road_Type
+accidents$Road_Type <- factor(accidents$Road_Type,
+                                       levels= c(1,2,3,6,7,9,12,-1),
+                                       labels= c("Roundabout", "One way street", "Dual carriageway", "Single carriageway", "Slip road", "Unknown", "One way street/Slip Road", "Data missing or out of range"))
+levels(accidents$Road_Type)
+```
+
+```{r}
+# Relabel the Junction_Detail
+accidents$Junction_Detail <- factor(accidents$Junction_Detail,
+                                       levels= c(0,1,2,3,5,6,7,8,9,-1),
+                                       labels= c("Not at junction or within 20 metres", "Roundabout", "Mini-roundabout", "T or staggered junction", "Slip road", "Crossroads", "More than 4 arms (not roundabout)", "Private drive or entrance", "Other junction", "Data missing or out of range"))
+levels(accidents$Junction_Detail)
+```
+
+```{r}
+# Relabel the Junction_Control
+accidents$Junction_Control <- factor(accidents$Junction_Control,
+                                       levels= c(0,1,2,3,4,-1),
+                                       labels= c("Not at junction or within 20 metres", "Authorised person", "Auto traffic signal", "Stop sign", "Give way or uncontrolled", "Data missing or out of range"))
+levels(accidents$Junction_Control)
+```
+
+
+```{r}
+# Relabel the X2nd_Road_Class
+accidents$X2nd_Road_Class <- factor(accidents$X2nd_Road_Class,
+                                       levels= c(1,2,3, 4, 5, 6),
+                                       labels= c("Motorway", "A(M)", "A", "B", "C", "Unclassified"))
+levels(accidents$X2nd_Road_Class)
+```
+
+
+```{r}
+# Relabel the Pedestrian_Crossing.Human_Control
+accidents$Pedestrian_Crossing.Human_Control <- factor(accidents$Pedestrian_Crossing.Human_Control,
+                                       levels= c(0,1,2,-1),
+                                       labels= c("None within 50 metres", "Control by school crossing patrol", "Control by other authorised person", "Data missing or out of range"))
+levels(accidents$Pedestrian_Crossing.Human_Control)
+```
+
+
+```{r}
+# Relabel the Pedestrian_Crossing.Physical_Facilities
+accidents$Pedestrian_Crossing.Physical_Facilities <- factor(accidents$Pedestrian_Crossing.Physical_Facilities,
+                                       levels= c(0,1,4,5,7,8,-1),
+                                       labels= c("No physical crossing facilities within 50 metres", "Zebra", "Pelican, puffin, toucan or similar non-junction pedestrian light crossing", "Pedestrian phase at traffic signal junction", "Footbridge or subway", "Central refuge", "Data missing or out of range"))
+levels(accidents$Pedestrian_Crossing.Physical_Facilities)
+```
+
+```{r}
+# Relabel the Light_Conditions
+accidents$Light_Conditions <- factor(accidents$Light_Conditions,
+                                       levels= c(1,4,5,6,7,-1),
+                                       labels= c("Daylight", "Darkness - lights lit", "Darkness - lights unlit", "Darkness - no lighting", "Darkness - lighting unknown", "Data missing or out of range"))
+levels(accidents$Light_Conditions)
+```
+
+
+```{r}
+# Relabel the Weather_Conditions
+accidents$Weather_Conditions <- factor(accidents$Weather_Conditions,
+                                       levels= c(1,2,3,4,5,6,7,8,9,-1),
+                                       labels= c("Fine no high winds", "Raining no high winds", "Snowing no high winds", "Fine + high winds", "Raining + high winds", "Snowing + high winds", "Fog or mist", "Other", "Unknown", "Data missing or out of range"))
+levels(accidents$Weather_Conditions)
+```
+
+
+```{r}
+# Relabel the Road_Surface_Condition
+accidents$Road_Surface_Condition <- factor(accidents$Road_Surface_Condition,
+                                       levels= c(1,2,3,4,5,6,7,-1),
+                                       labels= c("Dry", "Wet or damp", "Snow", "Frost or ice", "Flood over 3cm deep", "Oil or diesel", "Mud", "Data missing or out of range"))
+levels(accidents$Road_Surface_Condition)
+```
+
+
+```{r}
+# Relabel the Special_Conditions_at_Site
+accidents$Special_Conditions_at_Site <- factor(accidents$Special_Conditions_at_Site,
+                                       levels= c(0,1,2,3,4,5,6,7,-1),
+                                       labels= c("None", "Auto traffic signal - out", "Auto signal part defective", "Road sign or marking defective or obscured", "Roadworks", "Road surface defective", "Oil or diesel", "Mud", "Data missing or out of range"))
+levels(accidents$Special_Conditions_at_Site)
+```
+
+
+
+```{r}
+# Relabel the Carriageway_Hazards
+accidents$Carriageway_Hazards <- factor(accidents$Carriageway_Hazards,
+                                       levels= c(0,1,2,3,4,5,6,7,-1),
+                                       labels= c("None","Vehicle load on road", "Other object on road", "Previous accident", "Dog on road", "Other animal on road", "Pedestrian in carriageway - not injured", "Any animal in carriageway (except ridden horse)", "Data missing or out of range"))
+levels(accidents$Carriageway_Hazards)
+```
+
+
+```{r}
+# Relabel the Urban_or_Rural_Area
+accidents$Urban_or_Rural_Area <- factor(accidents$Urban_or_Rural_Area,
+                                       levels= c(1,2,3),
+                                       labels= c("Urban", "Rural", "Unallocated"))
+levels(accidents$Urban_or_Rural_Area)
+```
+
+
+
+

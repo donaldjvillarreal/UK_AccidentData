@@ -1,0 +1,125 @@
+---
+title: "Untitled"
+author: "Wright, Aaron"
+date: "July 10, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+wd=getwd()
+load(paste(wd,"datafiles","accidents.rda", sep="/"))
+```
+
+
+```{r}
+catPlot<-function(df, var, lbl=''){
+  plotData<-data.frame(byvar = levels(factor(df[[var]])),   # Get list of level names
+                       freq = summary(factor(df[[var]])),   # Calculate frequency for each level
+                       slight = tapply(df[['sev']] == 'Slight', df[[var]], mean) / mean(df[['sev']] == 'Slight'),
+                       serious = tapply(df[['sev']] == 'Serious', df[[var]], mean) / mean(df[['sev']] == 'Serious'),
+                       fatal = tapply(df[['sev']] == 'Fatal', df[[var]], mean) / mean(df[['sev']] == 'Fatal'))
+ 
+  par(mar=c(7,5,2,5), cex=1.0) # bottom, left, top, right
+
+  #---------------------------------------------------------------------------- 
+  # Create bar chart of relative frequencies.  Factor levels are printed on the
+  # horizontal axis
+  #  mp = The midpoint of each bar (Used to position points of line plot)
+  #----------------------------------------------------------------------------
+  mp<-with(plotData,barplot(height=freq/sum(freq), col='yellow',
+           xlim=c(0,1.2*nrow(plotData)+.2), 
+           ylim = c(0,1), las=2,
+           names.arg=byvar, 
+           axes = F))
+
+  #--- create right axis ---
+  axis(side=4)
+  mtext(side=4, line=3, '% of total accidents', cex=1)
+ 
+  #---------------------------------------------------------------------------- 
+  # Overlay line plot
+  #----------------------------------------------------------------------------
+  par(new=T)
+    plot(x=c(0,max(mp)+.5), y=c(0,max(plotData[,3:5])), type='n', 
+         axes=F, xlim = c(0, 1.2*nrow(plotData)+.2), 
+         xlab=NA, ylab=NA, main=lbl)
+      lines(x=mp,y=plotData$slight, type='b', col='#e41a1c', pch=16)
+      lines(x=mp,y=plotData$serious, type='b', col='#377eb8', pch=16)
+      lines(x=mp,y=plotData$fatal, type='b', col='black', pch=16)
+ 
+  #--- create left axis --- 
+  axis(side=2)
+  mtext(side=2, line=3, 'Casualty Rate Relative to Mean', cex=1)
+ 
+  #----------------------------------------------------------------------------
+  # Create legend
+  #----------------------------------------------------------------------------  
+  par(xpd=T, new=T)
+    plot(x=c(0,1), y=c(0,1), xlim=c(0,1), ylim=c(0,1), type='n', axes=F, xlab=NA, ylab=NA)
+      legend(x=-.18, y=-.1, legend=c('slight',"serious",'fatal'),
+             text.col=c("#e41a1c","#377eb8",'black'), lty=1, 
+             col=c("#e41a1c","#377eb8",'black'), cex=1,
+             xpd=T, bty='o', pch=16)
+ 
+}
+
+
+
+```
+
+
+```{r}
+catPlot(accidents,'UrbanRural',' ')
+```
+
+
+
+```{r}
+catPlot(accidents,'WeathCond','Weather Conditions')
+catPlot(accidents,'Wind','Weather Conditions - Wind')
+#catPlot(accidents,'Fine','Weather Conditions - Fine')
+catPlot(accidents,'Rain','Weather Conditions - Rain')
+catPlot(accidents,'Snow','Weather Conditions - Snow')
+catPlot(accidents,'Fog','Weather Conditions - Fog')
+
+```
+
+
+```{r}
+catPlot(accidents,'DryRd','Weather Conditions - Dry')
+catPlot(accidents,'WetRd','Weather Conditions - Wet')
+catPlot(accidents,'SnowRd','Weather Conditions - Snow')
+catPlot(accidents,'IceRd','Weather Conditions - Ice')
+catPlot(accidents,'FloodRd','Weather Conditions - Flood')
+# Oil and Mud have no counts in Yes
+```
+
+```{r}
+catPlot(accidents,'SpecialCond','Special Conditions - All')
+catPlot(accidents,'SiteIssue_Signal','Special Conditions - Signal')
+catPlot(accidents,'SiteIssue_Sign','Special Conditions - Sign')
+catPlot(accidents,'SiteIssue_Construction','Special Conditions - Construction')
+#catPlot(accidents,'SiteIssue_Pothole','Special Conditions - Pothole')
+catPlot(accidents,'SiteIssue_Mud','Special Conditions - Mud')
+catPlot(accidents,'SiteIssue_Oil','Special Conditions - Oil')
+# Oil and Mud have no counts in Yes
+
+#fct_count(accidents$SiteIssue_PotHole)
+#table(accidents$SiteIssue_PotHole,accidents$sev)
+```
+
+
+```{r}
+#catPlot(accidents,'Hazards','Road Hazards - All')
+catPlot(accidents,'Hazard_Animal','Road Hazards - Animal')
+catPlot(accidents,'Hazard_Ped','Road Hazards - Pedestrian')
+catPlot(accidents,'Hazard_Object','Road Hazards - Object')
+catPlot(accidents,'Hazard_PrevAcc','Road Hazards - Previous Acc')
+
+#fct_count(accidents$SiteIssue_PotHole)
+#table(accidents$SiteIssue_PotHole,accidents$sev)
+```
+
+
+

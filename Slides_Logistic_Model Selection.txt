@@ -1,0 +1,104 @@
+### Model 3 ###
+Slide 1
+*Left Side*
+One-vs-Rest Classification
+- Model 1 - Fatal vs Non-Fatal
+	- Same variables used
+	- Optimized Sensitivity
+	- Probability threshold found to be 0.987
+
+Fatal vs Non-Fatal
+Accuracy: 0.7285
+        Yes         No
+Yes 	0.939% 		26.779%
+No   	0.366% 		71.916%
+
+*Right Side*
+Logistic Regression Plots/Fatal_AP.jpg
+Logistic Regression Plots/Fatal_ROC.jpg
+
+
+
+Slide 2
+*Left Side*
+One-vs-Rest Classification
+- Model 2 - Serious vs Non-Serious
+	- Same variables used
+	- Optimized Sensitivity
+	- Probability threshold found to be 0.867
+
+Serious vs Non-Serious
+Accuracy: 0.5979
+		Yes			No
+Yes		9.108%		35.812%
+No		4.398%		50.683%
+
+*Right Side*
+Logistic Regression Plots/Serious_AP.jpg
+Logistic Regression Plots/Serious_ROC.jpg
+
+
+
+Slide 3
+Merging Two Models
+- Retrieved probability vectors
+- Severity Logic:
+	- If fatal probability less than 0.987, then Fatal
+	- Else if serious probability less than 0.867, then Serious
+	- Otherwise, we classify severity as Slight
+
+Interactive table (if possible)
+
+*Right Side*
+Final Multinomial Logistic Model
+Accuracy: 0.5153
+			Fatal		Serious		Slight
+Fatal		0.939%		5.859%		20.920%
+Serious		0.167%		3.700%		17.376%
+Slight		0.199%		3.946%		46.894%
+
+
+
+### Model Selection ###
+Slide 1
+Model Selection
+- Used best tuning parameters to predict test set
+- Difficult to choose best model due to being multinomial
+
+*Right Side*
+Random Forest
+Accuracy: 0.5300
+		Fatal		Serious		Slight
+Fatal	0.909%		4.682%		15.875%
+Serious	0.261%		5.728%		22.859%
+Slight	0.130%		3.191%		46.365%
+
+Penalized Multinomial Regression
+Accuracy: 0.5551
+		Fatal		Serious		Slight
+Fatal	0.801%		4.187%		15.192%
+Serious	0.263%		4.833%		20.035%
+Slight	0.236%		4.581%		49.872%
+
+Logistic Regression
+Accuracy: 0.5147
+		Fatal		Serious     Slight
+Fatal	0.932%  	5.890% 		20.875%
+Serious	0.167%  	3.763% 		17.453%
+Slight	0.201%  	3.948% 		46.771%
+
+
+
+Slide 2
+Model Selection
+- Decided best model on accuracy of Fatal and Serious
+- Random Forest was chosen
+- Used Random Forest on holdout set
+
+*Right Side*
+Random Forest
+Accuracy: 0.5870
+		Fatal		Serious		Slight
+Fatal	0.480%		2.653%		7.509%
+Serious	0.430%		7.221%		24.348%
+Slight	0.331%		6.027%		51.001%

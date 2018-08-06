@@ -1,0 +1,100 @@
+---
+title: "loadData"
+author: "Richard Gower"
+date: "July 7, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## load the data
+
+
+```{r }
+for(i in c("2005_2014", 2015, 2016)) {
+  wd=getwd()
+  for(j in c("accidents", "casualties", "vehicles")) {
+    file=paste(wd, "Data",paste0("DfTRoadSafety_", j, "_", i,".csv"), sep="/")
+    print(file)
+    assign(paste0(j, ".", i), read.csv(file, head=TRUE, stringsAsFactors = FALSE))
+  }
+}
+
+colnames(accidents.2005_2014)[1] = "Accident_Index"
+colnames(casualties.2005_2014)[1] = "Accident_Index"
+colnames(vehicles.2005_2014)[1] = "Accident_Index"
+    
+save(accidents.2005_2014, file="datafiles\\accidents.2005_2014.rda")
+save(accidents.2015, file="datafiles\\accidents.2015.rda")
+save(accidents.2016, file="datafiles\\accidents.2016.rda")
+save(casualties.2005_2014, file="datafiles\\casualties.2005_2014.rda")
+save(casualties.2015, file="datafiles\\casualties.2015.rda")
+save(casualties.2016, file="datafiles\\casualties.2016.rda")
+save(vehicles.2005_2014, file="datafiles\\vehicles.2005_2014.rda")
+save(vehicles.2015, file="datafiles\\vehicles.2015.rda")
+save(vehicles.2016, file="datafiles\\vehicles.2016.rda")
+```
+
+```{r}
+for(i in 2009:2016) {
+  wd=getwd()
+  file=paste(wd, "Data",paste0("DfTRoadSafety_MakeModel_", i,".csv"), sep="/")
+  assign(paste0("makeModel.", i), read.csv(file, head=TRUE, stringsAsFactors = FALSE))
+}
+
+file=paste(wd, "Data",paste0("DfTRoadSafety_MakeModel_2004_2008.csv"), sep="/")
+makeModel.2004_2008=read.csv(file, head=TRUE, stringsAsFactors = FALSE)
+
+# standardize on the names in the Year 2009 file
+names(makeModel.2004_2008)=names(makeModel.2009)
+names(makeModel.2010)=names(makeModel.2009)
+names(makeModel.2011)=names(makeModel.2009)
+names(makeModel.2012)=names(makeModel.2009)
+names(makeModel.2013)=names(makeModel.2009)
+names(makeModel.2014)=names(makeModel.2009)
+names(makeModel.2015)=names(makeModel.2009)
+names(makeModel.2016)=names(makeModel.2009)
+
+save(makeModel.2004_2008, file="datafiles\\makeModel.2004_2008.rda")
+save(makeModel.2009, file="datafiles\\makeModel.2009.rda")
+save(makeModel.2010, file="datafiles\\makeModel.2010.rda")
+save(makeModel.2011, file="datafiles\\makeModel.2011.rda")
+save(makeModel.2012, file="datafiles\\makeModel.2012.rda")
+save(makeModel.2013, file="datafiles\\makeModel.2013.rda")
+save(makeModel.2014, file="datafiles\\makeModel.2014.rda")
+save(makeModel.2015, file="datafiles\\makeModel.2015.rda")
+save(makeModel.2016, file="datafiles\\makeModel.2016.rda")
+```
+
+```{r}
+# rm(accidents.2005_2014)
+# rm(accidents.2015)
+# rm(accidents.2016)
+# 
+# rm(casualties.2005_2014)
+# rm(casualties.2015)
+# rm(casualties.2016)
+# 
+# rm(vehicles.2005_2014)
+# rm(vehicles.2015)
+# rm(vehicles.2016)
+# 
+# rm(MakeModel.2004_2008)
+# rm(MakeModel.2009)
+# rm(MakeModel.2010)
+# rm(MakeModel.2011)
+# rm(MakeModel.2012)
+# rm(MakeModel.2013)
+# rm(MakeModel.2014)
+# rm(MakeModel.2015)
+# rm(MakeModel.2016)
+
+rm(datasetName)
+rm(file)
+rm(i)
+rm(j)
+rm(wd)
+```
+

@@ -1,0 +1,247 @@
+---
+title: "Untitled"
+author: "Wright, Aaron"
+date: "June 28, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+
+
+
+```{r}
+for(i in c("2005_2014", "2015", "2016")) {
+  wd=getwd()
+  
+  for(j in c("accidents", "casualties", "vehicles")) {
+    file=paste(wd, "Data",paste0("DfTRoadSafety_", j, "_", i,".csv"), sep="/")
+    assign(paste0(j, ".", i), read.csv(file, head=TRUE))
+  }
+}
+
+
+colnames(accidents.2005_2014)[1] <- "Accident_Index"
+colnames(casualties.2005_2014)[1] <- "Accident_Index"
+colnames(vehicles.2005_2014)[1] <- "Accident_Index"
+
+accidents = rbind(accidents.2005_2014, accidents.2015, accidents.2016)
+casualties = rbind(casualties.2005_2014, casualties.2015[,-16], casualties.2016[,-16])
+vehicles = rbind(vehicles.2005_2014, vehicles.2015[,-23], vehicles.2016[,-23])
+
+for(i in 2009:2016) {
+  wd=getwd()
+  file=paste(wd, "Data",paste0("DfTRoadSafety_MakeModel_", i,".csv"), sep="/")
+  assign(paste0("MakeModel.", i), read.csv(file, head=TRUE))
+}
+
+file=paste(wd, "Data",paste0("DfTRoadSafety_MakeModel_2004_2008.csv"), sep="/")
+MakeModel.2004_2008=read.csv(file, head=TRUE)
+
+sum(names(MakeModel.2004_2008) != names(MakeModel.2009))
+names(MakeModel.2004_2008)=names(MakeModel.2009)
+names(MakeModel.2010)=names(MakeModel.2009)
+names(MakeModel.2011)=names(MakeModel.2009)
+names(MakeModel.2012)=names(MakeModel.2009)
+names(MakeModel.2013)=names(MakeModel.2009)
+names(MakeModel.2014)=names(MakeModel.2009)
+names(MakeModel.2015)=names(MakeModel.2009)
+names(MakeModel.2016)=names(MakeModel.2009)
+
+MakeModel = rbind(MakeModel.2004_2008, MakeModel.2009, MakeModel.2010, MakeModel.2011, MakeModel.2012, MakeModel.2013, MakeModel.2014,MakeModel.2015, MakeModel.2016)
+```
+
+
+#Clean up old files
+
+```{r}
+
+rm(accidents.2005_2014)
+rm(accidents.2015)
+rm(accidents.2016)
+
+rm(casualties.2005_2014)
+rm(casualties.2015)
+rm(casualties.2016)
+
+rm(vehicles.2005_2014)
+rm(vehicles.2015)
+rm(vehicles.2016)
+
+rm(MakeModel.2004_2008)
+rm(MakeModel.2009)
+rm(MakeModel.2010)
+rm(MakeModel.2011)
+rm(MakeModel.2012)
+rm(MakeModel.2013)
+rm(MakeModel.2014)
+rm(MakeModel.2015)
+rm(MakeModel.2016)
+
+```
+
+##Start Data Cleaning
+
+```{r}
+accidents$Date <- as.Date(accidents$Date, "%d/%m/%Y")
+# Extract the month
+accidents$month <- format(accidents$Date, format="%B")
+accidents$month <- as.factor(accidents$month)
+accidents$month <- factor(accidents$month,levels=month.name)
+summary(accidents$month)
+```
+
+```{r}
+# Extract the day of the week
+accidents$day <- format(accidents$Date, format="%A")
+accidents$day <- factor(accidents$day, levels=c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"),
+                     labels=c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"))
+summary(accidents$day)
+```
+
+```{r}
+# Add an hour band variable
+accidents$Time <- gsub("[ [:punct:]]", "" , accidents$Time) # remove punctuation from 'Time' variable
+accidents$Time <- gsub("(\\d\\d)(\\d\\d)", "\\1:\\2", accidents$Time) # add a colon after 2nd value
+accidents$hour<- as.POSIXlt(accidents$Time, format="%H:%M")$hour # add a new column called 'hour' with hours band
+```
+
+
+
+
+```{r}
+# Relabel the 'Accident_Severity' categories
+accidents$Accident_Severity <- factor(accidents$Accident_Severity,
+                                       levels= c(1,2,3),
+                                       labels= c("Fatal", "Serious", "Slight"))
+levels(accidents$Accident_Severity)
+```
+
+
+#Mapping function
+
+```{r}
+library(ggplot2)
+library(RColorBrewer)
+library(hexbin)
+
+uk <- map_data('world')[map_data('world')$region == 'UK',]
+uk <- uk[uk$subregion != 'Northern Ireland',]
+
+map.uk <- function(df, title=''){
+  ggplot(data=df, aes(x=Longitude, y=Latitude)) +
+
+   # Tan background of British map
+    geom_polygon(data=uk, aes(x=long, y=lat, group=group), fill='tan') +
+
+   # Create heatmap of hexagonal bin counts
+    stat_binhex(bins=200) +
+
+   # Black outline of British map
+    geom_polygon(data=uk, aes(x=long, y=lat, group=group), fill='NA', color='black', size=.2) +
+
+   # Fix the aspect ratio (y/x)
+    coord_fixed(1.3) +
+
+   # Change the color theme and adjust the breakpoints
+    scale_fill_gradientn(colours=brewer.pal(n=9, name='YlOrRd'), trans='log') +
+
+   # Remove gridlines, axis titles and text, color water blue
+    theme(axis.ticks=element_blank(), 
+          axis.title=element_blank(),
+          axis.text=element_blank(),
+          panel.grid = element_blank(),
+          panel.background=element_rect(fill='lightblue', 
+          color='black')) +
+
+   # Add plot title
+    ggtitle(title)
+}
+
+```
+
+```{r}
+map.uk(accidents[accidents$Accident_Severity == 1,], 'Fatal Auto Casualties - 2005 to 2016')
+map.uk(accidents[accidents$Accident_Severity == 2,], 'Serious Auto Casualties - 2005 to 2016')
+map.uk(accidents[accidents$Accident_Severity == 3,], 'Slight Auto Casualties - 2005 to 2016')
+
+map.uk(accidents, 'Total Auto Casualties - 2005 to 2016')
+```
+
+
+#Function for variable exploration
+
+
+```{r}
+catPlot<-function(df, var, lbl=''){
+  plotData<-data.frame(byvar = levels(factor(df[[var]])),   # Get list of level names
+                       freq = summary(factor(df[[var]])),   # Calculate frequency for each level
+                       slight = tapply(df[['Accident_Severity']] == 'Slight', df[[var]], mean) / mean(df[['Accident_Severity']] == 'Slight'),
+                       serious = tapply(df[['Accident_Severity']] == 'Serious', df[[var]], mean) / mean(df[['Accident_Severity']] == 'Serious'),
+                       fatal = tapply(df[['Accident_Severity']] == 'Fatal', df[[var]], mean) / mean(df[['Accident_Severity']] == 'Fatal'))
+ 
+  par(mar=c(7,5,2,5), cex=1.0) # bottom, left, top, right
+
+  #---------------------------------------------------------------------------- 
+  # Create bar chart of relative frequencies.  Factor levels are printed on the
+  # horizontal axis
+  #  mp = The midpoint of each bar (Used to position points of line plot)
+  #----------------------------------------------------------------------------
+  mp<-with(plotData,barplot(height=freq/sum(freq), col='yellow',
+           xlim=c(0,1.2*nrow(plotData)+.2), 
+           ylim = c(0,1), las=2,
+           names.arg=byvar, 
+           axes = F))
+
+  #--- create right axis ---
+  axis(side=4)
+  mtext(side=4, line=3, '% of total accidents', cex=1)
+ 
+  #---------------------------------------------------------------------------- 
+  # Overlay line plot
+  #----------------------------------------------------------------------------
+  par(new=T)
+    plot(x=c(0,max(mp)+.5), y=c(0,max(plotData[,3:5])), type='n', 
+         axes=F, xlim = c(0, 1.2*nrow(plotData)+.2), 
+         xlab=NA, ylab=NA, main=lbl)
+      lines(x=mp,y=plotData$slight, type='b', col='#e41a1c', pch=16)
+      lines(x=mp,y=plotData$serious, type='b', col='#377eb8', pch=16)
+      lines(x=mp,y=plotData$fatal, type='b', col='black', pch=16)
+ 
+  #--- create left axis --- 
+  axis(side=2)
+  mtext(side=2, line=3, 'Casualty Rate Relative to Mean', cex=1)
+ 
+  #----------------------------------------------------------------------------
+  # Create legend
+  #----------------------------------------------------------------------------  
+  par(xpd=T, new=T)
+    plot(x=c(0,1), y=c(0,1), xlim=c(0,1), ylim=c(0,1), type='n', axes=F, xlab=NA, ylab=NA)
+      legend(x=-.18, y=-.1, legend=c('slight',"serious",'fatal'),
+             text.col=c("#e41a1c","#377eb8",'black'), lty=1, 
+             col=c("#e41a1c","#377eb8",'black'), cex=1,
+             xpd=T, bty='o', pch=16)
+ 
+}
+
+
+
+```
+
+
+
+```{r}
+catPlot(accidents,'Weather_Conditions','Weather Conditions Indicator')
+```
+
+#Urban or Rural
+```{r}
+catPlot(accidents,'Urban_or_Rural_Area','Urban or Rural Indicator')
+```
+#Need more variable exploration
+
+

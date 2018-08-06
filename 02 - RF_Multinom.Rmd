@@ -1,0 +1,110 @@
+---
+title: "Untitled"
+author: "Wright, Aaron"
+date: "July 24, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library("caret")
+library("ranger")
+```
+
+```{r}
+train.sub <-subset(train.data, select=c("sev","Number_of_Vehicles", "Number_of_Casualties", "Speed_limit", "month", "day", "Wind", "Rain", "Snow", "Fog", "DryRd", "WetRd", "SnowRd", "IceRd", "FloodRd", "OilRd", "MudRd", "SiteIssue_Signal", "SiteIssue_Sign", "SiteIssue_Construction", "SiteIssue_PotHole", "SiteIssue_Mud", "SiteIssue_Oil", "Hazard_Animal", "Hazard_Ped", "Hazard_Object", "Hazard_PrevAcc", "UrbanRural", "vehMotoInd", "vehTramInd", "vehTowingInd", "vehTurningInd", "vehStoppedInd", "vehSkiddingInd", "vehLeavingInd", "vehFrontImpInd", "vehBackImpInd", "vehSideImpInd", "vehLeftDrInd", "child_in_casualties"))
+```
+
+
+```{r}
+# fit a random forest model (using ranger)
+#rf_fit <- train(sev ~ ., data = train.sub, method = "ranger")
+
+tgrid <- expand.grid(.mtry = 5:7, .splitrule = "gini", .min.node.size = c(10,20))
+
+rf_fit <- train(sev ~., data = train.sub, method = "ranger", 
+                trControl = trainControl(method="cv", number = 5, verboseIter = T, classProbs = T, sampling = "down"),
+                tuneGrid = tgrid,
+                num.trees = 100,
+                importance = "permutation")
+
+```
+
+
+```{r}
+varImp(rf_fit)
+```
+
+
+
+```{r}
+rf_fit
+```
+
+
+```{r}
+confusionMatrix(rf_fit)
+```
+
+
+```{r}
+
+library("MLmetrics")
+rf_fit2 <- train(sev ~ ., data = train.sub, 
+                            method = "multinom", 
+                            trControl = trainControl(method = "cv", number = 5, returnResamp = "all",classProbs = TRUE, 
+                                                     summaryFunction = multiClassSummary, sampling = "down"), metric = "Mean_Sensitivity", trace = FALSE)
+```
+
+
+```{r}
+varImp(rf_fit2)
+```
+
+
+
+```{r}
+rf_fit2
+```
+
+
+```{r}
+confusionMatrix(rf_fit2)
+```
+
+
+```{r}
+rf_test_predict <- predict(rf_fit,test.data)
+mn_test_predict <- predict(rf_fit2,test.data)
+test.rf.cf=table(rf_test_predict, test.data$sev);test.rf.cf
+test.mn.cf=table(mn_test_predict, test.data$sev);test.mn.cf
+```
+
+
+```{r}
+#create holdout data, test data, and train data
+id <- which(!(holdout.data$Speed_limit %in% levels(train.data$Speed_limit)))
+holdout.data$Speed_limit[id] <- 30
+
+
+mn_holdout_predict <- predict(rf_fit2,holdout.data)
+
+id2 <- which(holdout.data$Date>='2016-01-01')
+
+print("2015&16")
+holdout.mn.cf=table(mn_holdout_predict, holdout.data$sev);holdout.mn.cf
+
+print("2015")
+holdout.mn.cf=table(mn_holdout_predict[-id2], holdout.data[-id2,]$sev);holdout.mn.cf
+
+print("2016")
+holdout.mn.cf=table(mn_holdout_predict[id2], holdout.data[id2,]$sev);holdout.mn.cf
+```
+
+
+
+
+
+
+
+

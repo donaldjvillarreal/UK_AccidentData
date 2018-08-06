@@ -1,0 +1,302 @@
+---
+title: "Basic Analysis - Accident Data"
+author: "Richard Gower"
+date: "July 13, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r accidents}
+
+library(plyr)
+
+
+load(file="datafiles\\accidents.raw.rda")
+acc = accidents.raw
+rm(accidents.raw)
+load(file="datafiles\\casualties.raw.rda")
+cas = casualties.raw
+rm(casualties.raw)
+load(file="datafiles\\vehicles.raw.rda")
+veh = vehicles.raw
+rm(vehicles.raw)
+load(file="datafiles\\lookups.rda")
+
+displayTable = function(inTable){
+  str(inTable) 
+}
+
+catPlot = function(df, var, lbl=''){
+    plotData<-data.frame(byvar = levels(factor(df[[var]])),   # Get list of level names
+                         freq = summary(factor(df[[var]])),   # Calculate frequency for each level
+                         slight = tapply(df[['Accident_Severity']] == 'Slight', df[[var]], mean) / mean(df[['Accident_Severity']] == 'Slight'),
+                         serious = tapply(df[['Accident_Severity']] == 'Serious', df[[var]], mean) / mean(df[['Accident_Severity']] == 'Serious'),
+                         fatal = tapply(df[['Accident_Severity']] == 'Fatal', df[[var]], mean) / mean(df[['Accident_Severity']] == 'Fatal'))
+    par(mar=c(15,5,2,5), cex=1.0) # bottom, left, top, right
+    
+    #---------------------------------------------------------------------------- 
+    # Create bar chart of relative frequencies.  Factor levels are printed on the
+    # horizontal axis
+    #  mp = The midpoint of each bar (Used to position points of line plot)
+    #----------------------------------------------------------------------------
+    mp<-with(plotData,barplot(height=freq/sum(freq), col='yellow',
+                              xlim=c(0,1.2*nrow(plotData)+.2), 
+                              ylim = c(0,1), las=2,
+                              names.arg=byvar, 
+                              axes = F))
+    
+    #--- create right axis ---
+    axis(side=4)
+    mtext(side=4, line=3, '% of total accidents', cex=1)
+    
+    #---------------------------------------------------------------------------- 
+    # Overlay line plot
+    #----------------------------------------------------------------------------
+    par(new=T)
+    plot(x=c(0,max(mp)+.5), y=c(0,max(plotData[,3:5])), type='n', 
+         axes=F, xlim = c(0, 1.2*nrow(plotData)+.2), 
+         xlab=NA, ylab=NA, main=lbl)
+    lines(x=mp,y=plotData$slight, type='b', col='#e41a1c', pch=16)
+    lines(x=mp,y=plotData$serious, type='b', col='#377eb8', pch=16)
+    lines(x=mp,y=plotData$fatal, type='b', col='black', pch=16)
+    
+    #--- create left axis --- 
+    axis(side=2)
+    mtext(side=2, line=3, 'Casualty Rate Relative to Mean', cex=1)
+    
+    #----------------------------------------------------------------------------
+    # Create legend
+    #----------------------------------------------------------------------------  
+    par(xpd=T, new=T)
+    plot(x=c(0,1), y=c(0,1), xlim=c(0,1), ylim=c(0,1), type='n', axes=F, xlab=NA, ylab=NA)
+    legend(x=-.18, y=-.1, legend=c('slight',"serious",'fatal'),
+           text.col=c("#e41a1c","#377eb8",'black'), lty=1, 
+           col=c("#e41a1c","#377eb8",'black'), cex=1,
+           xpd=T, bty='o', pch=16)
+  }
+
+# look at response variable Accident_Severity
+
+
+displayData = function(inTable, inField){
+  print(paste("Table:", inTable, "Field:", inField)  )
+  print("Sample values:")
+  print(head(theDF[,inField], n=20))
+  # lets build distribution table
+  print("Distribution")
+  a = length(unique(theDF[,inField]))
+  if (a < 200){
+    print(paste("Number of unique values for",inField,":",a))
+    tempTable = table(theDF[,inField])
+    tempDF = data.frame(tempTable)
+
+    colnames(tempDF) = c("Value", "Frequency")
+    tempDF$Percent = round((tempDF$Frequency*100)/sum(tempDF$Frequency),2)
+    tempLookups = lookups[lookups$field == inField,c("numCode", "label")]
+    colnames(tempLookups) = c("Value", "Lookup")
+    tempDF = join(tempDF, tempLookups, by = "Value")
+    tempDF = subset(tempDF, select=c(Value, Lookup, Frequency, Percent))
+    print(tempDF)
+    rm(tempTable)
+    rm(tempLookups)
+    if (inTable == "accidents"){
+      df = theDF[,c("Accident_Severity", inField)]
+      df$Accident_Severity <- factor(df$Accident_Severity,
+                                       levels= c(1,2,3),
+                                       labels= c("Fatal", "Serious", "Slight"))
+    
+      df_levels = lookups[lookups$field==inField, c("numCode","label")]
+      uniqueVals = unique(df[,inField])
+      df_levels = df_levels[df_levels$numCode %in% uniqueVals, ]
+      if (nrow(df_levels) > 0) {
+        df[, 2] <- factor(df[,2],
+                        levels= df_levels$numCode,
+                        labels= df_levels$label)
+      }
+    
+      myTitle = paste(gsub("_", " ", inField), "Indicator") 
+      catPlot(df,inField,myTitle)      
+    }
+  }
+  else{
+    print("Many unique values")
+  }
+}
+
+
+
+displayTable(acc)
+
+inTables = c("accidents","casualties","vehicles")
+for (inTable in inTables){
+  if (inTable == "accidents"){
+    columns = colnames(acc)
+    theDF = acc
+  }
+  else if (inTable == "casualties"){
+    columns = colnames(cas)
+    theDF = cas
+  }
+  else if (inTable == "vehicles"){
+    columns = colnames(veh)
+    theDF = veh
+  }  
+  for (column in columns){
+    
+    if(column != "Accident_Severity"){
+        displayData(inTable, column)
+    }
+    else {
+      print(paste("Skipping:", column))
+    }
+ 
+  }
+}
+
+inField = "X2nd_Road_Class"
+   df = acc[,c("Accident_Severity", inField)]
+    df$Accident_Severity <- factor(df$Accident_Severity,
+                                       levels= c(1,2,3),
+                                       labels= c("Fatal", "Serious", "Slight"))
+    
+    df_levels = lookups[lookups$field==inField, c("numCode","label")]
+    uniqueVals = unique(df[,inField])
+    df_levels = df_levels[df_levels$numCode %in% uniqueVals, ]
+    if (nrow(df_levels) > 0) {
+      df[, 2] <- factor(df[,2],
+                        levels= df_levels$numCode,
+                        labels= df_levels$label)
+    }
+    
+    myTitle = paste(gsub("_", " ", inField), "Indicator") 
+    catPlot(df,inField,myTitle)
+
+```
+
+```{r}
+tempNZV = fieldDescriptions[is.na(fieldDescriptions$nzv) == FALSE & fieldDescriptions$nzv == TRUE,c("Table", "FieldName", "Sample", "nzv", "freqRatio", "percentUnique")]
+tempNZV
+for (loopTable in unique(tempNZV$Table)){
+  tempNZV2 = tempNZV[tempNZV$Table == loopTable,]
+
+  for (field in tempNZV2$FieldName){
+    print(paste("Table:", loopTable, "Field:", field))
+    if (loopTable =="accidents"){
+      thisUnique = length(unique(acc[, field]))
+      tempNZVTable = table(acc[, field])
+    }
+    else if (loopTable =="casualties"){
+      thisUnique = length(unique(cas[, field]))
+      tempNZVTable = table(cas[, field])
+    }
+    else if (loopTable =="vehicles"){
+      thisUnique = length(unique(veh[, field]))
+      tempNZVTable = table(veh[, field])
+    }    
+    
+    print(paste("Number of unique values:", thisUnique))
+
+    maxCount = max(tempNZVTable)
+    totalCount = sum(tempNZVTable)
+    maxValue = names(tempNZVTable[tempNZVTable == maxCount])
+    print(paste("Most observations", maxCount, "Value:",maxValue))
+    maxReads = min(10, nrow(tempNZVTable))
+    tempTopNZV = data.frame(tempNZVTable[order(-tempNZVTable)][1:maxReads])
+    colnames(tempTopNZV) = c("TopValues","Frequency")
+    if(field %in% lookups$field){
+      valuesInTable = unique(tempTopNZV$TopValues)
+      tempTopNZV$Lookup = lookups[lookups$field == field & lookups$numCode %in% valuesInTable, "label"]  
+    }
+    else {
+      tempTopNZV$Lookup = NA
+    }
+    tempTopNZV = subset(tempTopNZV, select=c(TopValues, Lookup, Frequency))
+    tempTopNZV$Percent = round(((tempTopNZV$Frequency*100)/totalCount),2)
+    print(tempTopNZV)
+
+    print(paste(" "))
+  }
+}
+
+
+
+
+
+```
+
+Identifies predictors that are have both of the following characteristics: 
+1. they have very few unique values relative to the number of samples - percentUnique
+2. the ratio of the frequency of the most common value to the frequency of the second most common value is large - freqRatio must be below uniqueCut (default = 10) and (frequency ratio) > freqCut (default = 95/5)
+
+
+```{r}
+# analysis of missing data
+
+
+tempMissingFields = fieldDescriptions[fieldDescriptions$MissingCount > 0, c("Table", "FieldName","MissingCount", "MissingPercent")]
+tempMissingFields = tempMissingFields[order(-tempMissingFields$MissingCount),]
+tempMissingFields
+inTables = c("accidents","casualties","vehicles")
+for (inTable in inTables){
+  if (inTable == "accidents"){
+    totalRows = nrow(acc) 
+    tempMissingRows = which(acc[,c(7:32)] == -1, arr.ind=TRUE)
+  }  
+  else if (inTable == "casualties"){
+    totalRows = nrow(cas) 
+    tempMissingRows = which(cas[,c(4:15)] == -1, arr.ind=TRUE)
+  }  
+  else if (inTable == "vehicles"){
+    totalRows = nrow(veh) 
+    tempMissingRows = which(veh[,c(3:22)] == -1, arr.ind=TRUE)
+  }  
+  totalRowsWithMissingValue = unique(tempMissingRows[1])
+  print(paste("Total rows in", inTable, ":",totalRows))
+  print(paste("Total rows in", inTable, "with at least one missing field:",totalRowsWithMissingValue))
+  print(paste("Total percent of missing rows:", round((100*totalRowsWithMissingValue)/totalRows),"%"))
+}
+
+rm(tempMissingRows)
+rm(tempMissingFields)
+
+library(naniar)
+acc2 = acc
+acc2
+vis_miss(veh)
+gg_miss_var(airquality)
+library(ggplot2)
+gg_miss_var(acc) + labs(y = "Look at all the missing ones")
+gg_miss_fct(x = acc, fct = Accident_Severity) + labs(title = "NA in Risk Factors and Marital status")
+
+```
+
+
+
+```{r}
+# look at pairwise
+
+
+```
+
+
+```{r}
+# look at relationship to predictor
+
+
+```
+
+
+
+
+
+
+

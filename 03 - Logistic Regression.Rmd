@@ -1,0 +1,275 @@
+---
+title: "Logistic Regression"
+author: "Villarreal, Donald"
+date: "7/12/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library("caret")
+library("corrplot")
+library("pROC")
+library("ROCR")
+library("MASS")
+#library("parallel")
+```
+
+Do not run this.  Takes 27 hours and the variables selected gives a 59% accuracy for fatal vs. nonfatal.
+Stepwise Selection
+```{r}
+#logistic.model.fatal = glm(fatal ~ ., data = train.data.fatal, family = "binomial")
+#print(paste("Creating Cores",Sys.time()))
+#no_cores <- detectCores() - 1
+#print(paste("Making Cluster",Sys.time()))
+#cl <- makeCluster(no_cores)
+#print(paste("Performing StepAIC",Sys.time()))
+#accident.step.fatal=stepAIC(logistic.model.fatal, trace=T)
+#print(paste("StepAIC Complete",Sys.time()))
+#stopCluster(cl)
+```
+
+Training our Fatal model on our predefined variables.  We want to predict fatal vs. nonfatal.
+```{r}
+train.data.fatal <-subset(train.data, select=c("fatal","Number_of_Vehicles", "Number_of_Casualties", "Speed_limit", "month", "day", "Wind",
+                                               "Rain", "Snow", "Fog", "DryRd", "WetRd", "SnowRd", "IceRd", "FloodRd", "OilRd", "MudRd",
+                                               "SiteIssue_Signal", "SiteIssue_Sign", "SiteIssue_Construction", "SiteIssue_PotHole",
+                                               "SiteIssue_Mud", "SiteIssue_Oil", "Hazard_Animal", "Hazard_Ped", "Hazard_Object",
+                                               "Hazard_PrevAcc", "UrbanRural", "vehMotoInd", "vehTramInd", "vehTowingInd", "vehTurningInd",
+                                               "vehStoppedInd", "vehSkiddingInd", "vehLeavingInd", "vehFrontImpInd", "vehBackImpInd",
+                                               "vehSideImpInd"))
+
+logistic.model.fatal = glm(fatal ~ ., data = train.data.fatal, family = "binomial")
+```
+
+We will predict on the training set, optimize for sensitivity and plug into our probability cutoff.  This will *hopefully* help us identify more true fatal severities.
+```{r}
+log.probs.fatal = predict(logistic.model.fatal, newdata=train.data.fatal, type = "response")
+
+pr <- prediction(log.probs.fatal, train.data.fatal$fatal)
+#accuracy plot
+acc.perf = performance(pr, measure = "acc")
+#jpeg('Fatal_AP.jpg')
+plot(acc.perf)
+#dev.off()
+#jpeg('Fatal_ROC.jpg')
+plot.roc(train.data.fatal$fatal, log.probs.fatal)
+#dev.off()
+
+rfROC=roc(train.data.fatal$fatal, log.probs.fatal)
+fatal.sens.opt = coords(rfROC, x = "best", best.method = "closest.topleft")
+
+lab.fatal=contrasts(train.data.fatal$fatal)
+tn.fatal=rownames(lab.fatal)
+pred.y.fatal = rep(tn.fatal[1], length(train.data.fatal$fatal))
+pred.y.fatal[log.probs.fatal > fatal.sens.opt[1]] = tn.fatal[2]
+pred.y.fatal=factor(pred.y.fatal)
+fatal.confusion = confusionMatrix(pred.y.fatal, train.data.fatal$fatal)
+fatal.confusion$table/nrow(train.data.fatal)*100
+fatal.confusion
+```
+
+We then train our serious model to get serious vs. non-serious.
+```{r}
+train.data.serious <-subset(train.data, select=c("Serious","Number_of_Vehicles", "Number_of_Casualties", "Speed_limit", "month", "day", "Wind",
+                                                 "Rain", "Snow", "Fog", "DryRd", "WetRd", "SnowRd", "IceRd", "FloodRd", "OilRd", "MudRd",
+                                                 "SiteIssue_Signal", "SiteIssue_Sign", "SiteIssue_Construction", "SiteIssue_PotHole",
+                                                 "SiteIssue_Mud", "SiteIssue_Oil", "Hazard_Animal", "Hazard_Ped", "Hazard_Object",
+                                                 "Hazard_PrevAcc", "UrbanRural", "vehMotoInd", "vehTramInd", "vehTowingInd", "vehTurningInd",
+                                                 "vehStoppedInd", "vehSkiddingInd", "vehLeavingInd", "vehFrontImpInd", "vehBackImpInd",
+                                                 "vehSideImpInd"))
+
+logistic.model.serious = glm(Serious ~ ., data = train.data.serious, family = "binomial")
+```
+
+We then predict serious on the training set, optimizing for sensitivity again.  This will help us identify more true serious severities.
+```{r}
+log.probs.serious = predict(logistic.model.serious, newdata=train.data.serious, type = "response")
+
+pr <- prediction(as.data.frame(log.probs.serious), train.data.serious$Serious)
+#accuracy plot
+acc.perf = performance(pr, measure = "acc")
+#jpeg('Serious_AP.jpg')
+plot(acc.perf)
+#dev.off()
+#jpeg('Serious_ROC.jpg')
+plot.roc(train.data.serious$Serious, log.probs.serious)
+#dev.off()
+
+rfROC=roc(train.data.serious$Serious, log.probs.serious)
+serious.sens.opt = coords(rfROC, x = "best", best.method = "closest.topleft")
+
+lab.Serious=contrasts(train.data.serious$Serious)
+tn.Serious=rownames(lab.Serious)
+pred.y.Serious = rep(tn.Serious[1], length(train.data.serious$Serious))
+pred.y.Serious[log.probs.serious > serious.sens.opt[1]] = tn.Serious[2]
+pred.y.Serious=factor(pred.y.Serious)
+serious.confusion = confusionMatrix(pred.y.Serious, train.data.serious$Serious)
+serious.confusion$table/nrow(train.data.serious)*100
+serious.confusion
+```
+
+```{r}
+log.probs.train=data.frame(Fatal=log.probs.fatal, Serious=log.probs.serious, Severity=train.data$sev)
+#saveRDS(log.probs.train, "InteractiveConfusion.rds")
+log.probs.train$prediction=factor(ifelse(log.probs.train$Fatal<fatal.sens.opt[1],"Fatal",
+                                         ifelse(log.probs.train$Serious<serious.sens.opt[1],"Serious","Slight")))
+log.probs.train$prediction=factor(log.probs.train$prediction,levels(log.probs.train$prediction)[c(3,2,1)])
+
+lab.train=contrasts(log.probs.train$Severity)
+tn.train=rownames(lab.train)
+
+final.confusion.train = confusionMatrix(log.probs.train$prediction, train.data$sev)
+final.confusion.train$table/nrow(train.data)*100
+final.confusion.train
+```
+
+For our test set, we append a table with the two testing probabilities.  Again, we use the optimized probability cutoffs to try and identify more true fatal and true serious.
+```{r}
+test.data.fatal <-subset(test.data, select=c("fatal","Number_of_Vehicles", "Number_of_Casualties", "Speed_limit", "month", "day", "Wind",
+                                             "Rain", "Snow", "Fog", "DryRd", "WetRd", "SnowRd", "IceRd", "FloodRd", "OilRd", "MudRd",
+                                             "SiteIssue_Signal", "SiteIssue_Sign", "SiteIssue_Construction", "SiteIssue_PotHole",
+                                             "SiteIssue_Mud", "SiteIssue_Oil", "Hazard_Animal", "Hazard_Ped", "Hazard_Object", 
+                                             "Hazard_PrevAcc", "UrbanRural", "vehMotoInd", "vehTramInd", "vehTowingInd", "vehTurningInd",
+                                             "vehStoppedInd", "vehSkiddingInd", "vehLeavingInd", "vehFrontImpInd", "vehBackImpInd",
+                                             "vehSideImpInd"))
+test.data.serious <-subset(test.data, select=c("Serious","Number_of_Vehicles", "Number_of_Casualties", "Speed_limit", "month", "day", "Wind",
+                                               "Rain", "Snow", "Fog", "DryRd", "WetRd", "SnowRd", "IceRd", "FloodRd", "OilRd", "MudRd",
+                                               "SiteIssue_Signal", "SiteIssue_Sign", "SiteIssue_Construction", "SiteIssue_PotHole",
+                                               "SiteIssue_Mud", "SiteIssue_Oil", "Hazard_Animal", "Hazard_Ped", "Hazard_Object",
+                                               "Hazard_PrevAcc", "UrbanRural", "vehMotoInd", "vehTramInd", "vehTowingInd", "vehTurningInd",
+                                               "vehStoppedInd", "vehSkiddingInd", "vehLeavingInd", "vehFrontImpInd", "vehBackImpInd",
+                                               "vehSideImpInd"))
+
+
+
+log.probs=data.frame(Fatal=predict(logistic.model.fatal, newdata=test.data.fatal, type = "response"),
+                     Serious=predict(logistic.model.serious, newdata=test.data.serious, type = "response"),
+                     Severity=test.data$sev)
+
+log.probs$prediction=factor(ifelse(log.probs$Fatal<fatal.sens.opt[1],"Fatal",ifelse(log.probs$Serious<serious.sens.opt[1],"Serious","Slight")))
+log.probs$prediction=factor(log.probs$prediction,levels(log.probs$prediction)[c(3,2,1)])
+
+lab=contrasts(log.probs$Severity)
+tn=rownames(lab)
+
+final.confusion = confusionMatrix(log.probs$prediction, test.data$sev)
+final.confusion$table/nrow(test.data)*100
+final.confusion
+```
+
+Checking for any probabilities of N/A, which means there was missing data and they were automatically assigned to slight.  We ideally want these to be 0.
+```{r}
+sum(is.na(log.probs$Serious))
+sum(is.na(log.probs$Fatal))
+```
+
+
+```{r}
+fatal.importance=data.frame(variable=row.names(varImp(logistic.model.fatal)), fatal.importance=unlist(varImp(logistic.model.fatal)))
+rownames(fatal.importance)=NULL
+fatal.importance=fatal.importance[order(-fatal.importance$fatal.importance),]
+fatal.importance[1:10,]
+
+serious.importance=data.frame(variable=row.names(varImp(logistic.model.serious)), serious.importance=unlist(varImp(logistic.model.serious)))
+rownames(serious.importance)=NULL
+serious.importance=serious.importance[order(-serious.importance$serious.importance),]
+serious.importance[1:10,]
+```
+
+Logic for interactive plot on Shiny
+```{r}
+fatal.slider=0.9871327 #slider should go from 0 to 1
+serious.slider=0.8672438 #slider should go from 0 to 1
+log.probs.train$prediction=factor(ifelse(log.probs.train$Fatal<fatal.slider,"Fatal",
+                                         ifelse(log.probs.train$Serious<serious.slider,"Serious","Slight")))
+log.probs.train$prediction=factor(log.probs.train$prediction,levels(log.probs.train$prediction)[c(3,2,1)])
+
+lab.train=contrasts(log.probs.train$Severity)
+tn.train=rownames(lab.train)
+
+final.confusion.train = suppressWarnings(confusionMatrix(log.probs.train$prediction, train.data$sev))
+#first output is accuracy
+final.confusion.train$overall[1]
+#second output is the confusion matrix, this one is the percentage to keep consistent with the others.
+final.confusion.train$table/nrow(train.data)*100
+```
+
+Confusion Matrices for Shiny
+```{r}
+#Logistic on Training Data
+output$cfmx.logistic.train = renderPrint({
+  Fatal = c(Fatal=0.939, Serious=5.859, Slight=20.920)
+  Serious = c(0.167, 3.700, 17.376)
+  Slight = c(0.199, 3.946, 46.894)
+  Accuracy3 = 51.5
+  Regression = rbind(Fatal, Serious, Slight)
+  noquote(format(Regression,
+                 digits=2, nsmall=0, big.mark=",", trim=TRUE, scientific = FALSE))
+ })
+
+#Random Forest on Test Data
+output$cfmx.rf.test = renderPrint({
+  Fatal = c(Fatal=0.909, Serious=4.682, Slight=15.875)
+  Serious = c(0.261, 5.728, 22.859)
+  Slight = c(0.130, 3.191, 46.365)
+  Accuracy3 = 53.0
+  Regression = rbind(Fatal, Serious, Slight)
+  noquote(format(Regression,
+                 digits=2, nsmall=0, big.mark=",", trim=TRUE, scientific = FALSE))
+ })
+
+#Multinomial on Test Data
+output$cfmx.mnn.test = renderPrint({
+  Fatal = c(Fatal=0.801, Serious=4.187, Slight=15.192)
+  Serious = c(0.263, 4.833, 20.035)
+  Slight = c(0.236, 4.581, 49.872)
+  Accuracy3 = 55.5
+  Regression = rbind(Fatal, Serious, Slight)
+  noquote(format(Regression,
+                 digits=2, nsmall=0, big.mark=",", trim=TRUE, scientific = FALSE))
+ })
+
+#Logistic on Test Data
+output$cfmx.log.test = renderPrint({
+  Fatal = c(Fatal=0.932, Serious=5.890, Slight=20.875)
+  Serious = c(0.167, 3.763, 17.453)
+  Slight = c(0.201, 3.948, 46.771)
+  Accuracy3 = 51.5
+  Regression = rbind(Fatal, Serious, Slight)
+  noquote(format(Regression,
+                 digits=2, nsmall=0, big.mark=",", trim=TRUE, scientific = FALSE))
+ })
+
+#Random Forest on Holdout Data
+output$cfmx.rf.holdout = renderPrint({
+  Fatal = c(Fatal=0.480, Serious=2.653, Slight=7.509)
+  Serious = c(0.430, 7.221, 24.348)
+  Slight = c(0.331, 6.027, 51.001)
+  Accuracy3 = 58.7
+  Regression = rbind(Fatal, Serious, Slight)
+  noquote(format(Regression,
+                 digits=2, nsmall=0, big.mark=",", trim=TRUE, scientific = FALSE))
+ })
+
+#Logistic Fatal vs NonFatal
+output$cfmx.logistic.fatal = renderPrint({
+  Yes = c(Yes=0.939, No=26.779)
+  No = c(0.366, 71.916)
+  Accuracy3 = 72.9
+  Regression = rbind(Yes, No)
+  noquote(format(Regression,
+                 digits=2, nsmall=0, big.mark=",", trim=TRUE, scientific = FALSE))
+ })
+
+#Logistic Serious vs. NonSerious
+output$cfmx.logistic.serious = renderPrint({
+  Yes = c(Yes=9.108, No=35.812)
+  No = c(4.398, 50.683)
+  Accuracy3 = 59.8
+  Regression = rbind(Yes, No)
+  noquote(format(Regression,
+                 digits=2, nsmall=0, big.mark=",", trim=TRUE, scientific = FALSE))
+ })
+```
+

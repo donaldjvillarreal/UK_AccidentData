@@ -1,0 +1,311 @@
+---
+title: "Untitled"
+author: "Wright, Aaron"
+date: "July 7, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+# Relabel the 'Accident_Severity' categories
+accidents$sev <- factor(accidents$Accident_Severity,
+                                       levels= c(1,2,3),
+                                       labels= c("Fatal", "Serious", "Slight"))
+
+library("forcats")
+accidents$fatal <- fct_collapse(accidents$sev,
+Yes = c("Fatal"),
+No = c("Serious", "Slight")
+)
+
+accidents$Serious <- fct_collapse(accidents$sev,
+Yes = c("Serious"),
+No = c("Fatal", "Slight")
+)
+
+accidents$Slight <- fct_collapse(accidents$sev,
+Yes = c("Slight"),
+No = c("Serious", "Fatal")
+)
+
+
+```
+
+```{r}
+# Relabel the X1st_Road_Class
+accidents$X1st <- factor(accidents$X1st_Road_Class,
+                                       levels= c(1,2,3, 4, 5, 6),
+                                       labels= c("Motorway", "A(M)", "A", "B", "C", "Unclassified"))
+levels(accidents$X1st)
+```
+
+```{r}
+# Relabel the Road_Type
+accidents$RdType <- factor(accidents$Road_Type,
+                                       levels= c(1,2,3,6,7,9,12,-1),
+                                       labels= c("Roundabout", "One way street", "Dual carriageway", "Single carriageway", "Slip road", "Unknown", "One way street/Slip Road", "Data missing or out of range"))
+levels(accidents$RdType)
+```
+
+```{r}
+# Relabel the Junction_Detail
+accidents$JuncDetail <- factor(accidents$Junction_Detail,
+                                       levels= c(0,1,2,3,5,6,7,8,9,-1),
+                                       labels= c("Not at junction or within 20 metres", "Roundabout", "Mini-roundabout", "T or staggered junction", "Slip road", "Crossroads", "More than 4 arms (not roundabout)", "Private drive or entrance", "Other junction", "Data missing or out of range"))
+levels(accidents$JuncDetail)
+```
+
+```{r}
+# Relabel the Junction_Control
+accidents$JuncCtrl <- factor(accidents$Junction_Control,
+                                       levels= c(0,1,2,3,4,-1),
+                                       labels= c("Not at junction or within 20 metres", "Authorised person", "Auto traffic signal", "Stop sign", "Give way or uncontrolled", "Data missing or out of range"))
+levels(accidents$JuncCtrl)
+```
+
+
+```{r}
+# Relabel the X2nd_Road_Class
+accidents$X2nd <- factor(accidents$X2nd_Road_Class,
+                                       levels= c(1,2,3, 4, 5, 6),
+                                       labels= c("Motorway", "A(M)", "A", "B", "C", "Unclassified"))
+levels(accidents$X2nd)
+```
+
+
+```{r}
+# Relabel the Pedestrian_Crossing.Human_Control
+accidents$PedXingHC <- factor(accidents$Pedestrian_Crossing.Human_Control,
+                                       levels= c(0,1,2,-1),
+                                       labels= c("None within 50 metres", "Control by school crossing patrol", "Control by other authorised person", "Data missing or out of range"))
+levels(accidents$PedXingHC)
+```
+
+
+```{r}
+# Relabel the Pedestrian_Crossing.Physical_Facilities
+accidents$PedXingPF <- factor(accidents$Pedestrian_Crossing.Physical_Facilities,
+                                       levels= c(0,1,4,5,7,8,-1),
+                                       labels= c("No physical crossing facilities within 50 metres", "Zebra", "Pelican, puffin, toucan or similar non-junction pedestrian light crossing", "Pedestrian phase at traffic signal junction", "Footbridge or subway", "Central refuge", "Data missing or out of range"))
+levels(accidents$PedXingPF)
+```
+
+```{r}
+# Relabel the Light_Conditions
+accidents$LightCond <- factor(accidents$Light_Conditions,
+                                       levels= c(1,4,5,6,7,-1),
+                                       labels= c("Daylight", "Darkness - lights lit", "Darkness - lights unlit", "Darkness - no lighting", "Darkness - lighting unknown", "Data missing or out of range"))
+fct_count(accidents$LightCond)
+
+accidents$Light <- fct_collapse(accidents$LightCond,
+Yes = c("Daylight", "Darkness - lights lit"),
+No = c("Darkness - lights unlit", "Darkness - no lighting", "Darkness - lighting unknown", "Data missing or out of range"),
+UNK = c("Data missing or out of range")
+)
+fct_count(accidents$Light)
+
+```
+
+
+```{r}
+# Relabel the Weather_Conditions
+accidents$WeathCond <- factor(accidents$Weather_Conditions,
+                                       levels= c(1,2,3,4,5,6,7,8,9,-1),
+                                       labels= c("Fine no high winds", "Raining no high winds", "Snowing no high winds", "Fine + high winds", "Raining + high winds", "Snowing + high winds", "Fog or mist", "Other", "Unknown", "Data missing or out of range"))
+levels(accidents$WeathCond)
+
+accidents$Wind <- fct_collapse(accidents$WeathCond,
+Yes = c("Fine + high winds", "Raining + high winds", "Snowing + high winds"),
+No = c("Fine no high winds", "Raining no high winds", "Snowing no high winds", "Fog or mist", "Other"),
+UNK = c("Unknown", "Data missing or out of range")
+)
+fct_count(accidents$Wind)
+
+
+accidents$Fine <- fct_collapse(accidents$WeathCond,
+Yes = c("Fine no high winds","Fine + high winds"),
+No = c("Raining no high winds", "Snowing no high winds", "Raining + high winds", "Snowing + high winds", "Fog or mist", "Other"),
+UNK = c("Unknown", "Data missing or out of range")
+)
+fct_count(accidents$Fine)
+
+accidents$Rain <- fct_collapse(accidents$WeathCond,
+Yes = c("Raining no high winds","Raining + high winds"),
+No = c("Fine no high winds","Snowing no high winds", "Fine + high winds", "Snowing + high winds", "Fog or mist", "Other"),
+UNK = c("Unknown", "Data missing or out of range")
+)
+fct_count(accidents$Rain)
+
+accidents$Snow <- fct_collapse(accidents$WeathCond,
+Yes = c("Snowing no high winds", "Snowing + high winds"),
+No = c("Fine no high winds", "Raining no high winds", "Fine + high winds", "Raining + high winds", "Fog or mist", "Other"),
+UNK = c("Unknown", "Data missing or out of range")
+)
+fct_count(accidents$Snow)
+
+accidents$Fog <- fct_collapse(accidents$WeathCond,
+Yes = c("Fog or mist"),
+No = c("Fine no high winds", "Raining no high winds", "Snowing no high winds", "Fine + high winds", "Raining + high winds", "Snowing + high winds", "Other"),
+UNK = c("Unknown", "Data missing or out of range")
+)
+fct_count(accidents$Fog)
+
+```
+
+
+```{r}
+# Relabel the Road_Surface_Condition
+accidents$RoadSurface <- factor(accidents$Road_Surface_Condition,
+                                       levels= c(1,2,3,4,5,6,7,-1),
+                                       labels= c("Dry", "Wet or damp", "Snow", "Frost or ice", "Flood over 3cm deep", "Oil or diesel", "Mud", "Data missing or out of range"))
+levels(accidents$RoadSurface)
+
+accidents$DryRd <- fct_collapse(accidents$RoadSurface,
+Yes = c("Dry"),
+No = c("Wet or damp", "Snow", "Frost or ice", "Flood over 3cm deep", "Oil or diesel", "Mud"),
+UNK = c("Data missing or out of range")
+)
+fct_count(accidents$DryRd)
+
+accidents$WetRd <- fct_collapse(accidents$RoadSurface,
+Yes = c("Wet or damp"),
+No = c("Dry", "Snow", "Frost or ice", "Flood over 3cm deep", "Oil or diesel", "Mud"),
+UNK = c("Data missing or out of range")
+)
+fct_count(accidents$WetRd)
+
+accidents$SnowRd <- fct_collapse(accidents$RoadSurface,
+Yes = c("Snow"),
+No = c("Dry", "Wet or damp", "Frost or ice", "Flood over 3cm deep", "Oil or diesel", "Mud"),
+UNK = c("Data missing or out of range")
+)
+fct_count(accidents$SnowRd)
+
+accidents$IceRd <- fct_collapse(accidents$RoadSurface,
+Yes = c("Frost or ice"),
+No = c("Dry", "Wet or damp", "Snow", "Flood over 3cm deep", "Oil or diesel", "Mud"),
+UNK = c("Data missing or out of range")
+)
+fct_count(accidents$IceRd)
+
+accidents$FloodRd <- fct_collapse(accidents$RoadSurface,
+Yes = c("Flood over 3cm deep"),
+No = c("Dry", "Wet or damp", "Snow", "Frost or ice", "Oil or diesel", "Mud"),
+UNK = c("Data missing or out of range")
+)
+fct_count(accidents$FloodRd)
+
+accidents$OilRd <- fct_collapse(accidents$RoadSurface,
+Yes = c("Oil or diesel"),
+No = c("Dry", "Wet or damp", "Snow", "Frost or ice", "Flood over 3cm deep", "Mud"),
+UNK = c("Data missing or out of range")
+)
+fct_count(accidents$OilRd)
+
+accidents$MudRd <- fct_collapse(accidents$RoadSurface,
+Yes = c("Mud"),
+No = c("Dry", "Wet or damp", "Snow", "Frost or ice", "Flood over 3cm deep", "Oil or diesel"),
+UNK = c("Data missing or out of range")
+)
+fct_count(accidents$MudRd)
+
+
+
+```
+
+
+```{r}
+# Relabel the Special_Conditions_at_Site
+accidents$SpecialCond <- factor(accidents$Special_Conditions_at_Site,
+                                       levels= c(0,1,2,3,4,5,6,7,-1),
+                                       labels= c("None", "Auto traffic signal - out", "Auto signal part defective", "Road sign or marking defective or obscured", "Roadworks", "Road surface defective", "Oil or diesel", "Mud", "Data missing or out of range"))
+fct_count(accidents$SpecialCond)
+
+accidents$SiteIssue_Signal <- fct_collapse(accidents$SpecialCond,
+Yes = c("Auto traffic signal - out", "Auto signal part defective"),
+No = c("None", "Road sign or marking defective or obscured", "Roadworks", "Road surface defective", "Oil or diesel", "Mud"),
+UNK = c("Data missing or out of range")
+)
+
+accidents$SiteIssue_Sign <- fct_collapse(accidents$SpecialCond,
+Yes = c("Road sign or marking defective or obscured"),
+No = c("None", "Auto traffic signal - out", "Auto signal part defective", "Roadworks", "Road surface defective", "Oil or diesel", "Mud"),
+UNK = c("Data missing or out of range")
+)
+
+accidents$SiteIssue_Construction <- fct_collapse(accidents$SpecialCond,
+Yes = c("Roadworks"),
+No = c("None", "Auto traffic signal - out", "Auto signal part defective", "Road sign or marking defective or obscured", "Road surface defective", "Oil or diesel", "Mud"),
+UNK = c("Data missing or out of range")
+)
+
+accidents$SiteIssue_PotHole <- fct_collapse(accidents$SpecialCond,
+Yes = c("Road surface defective"),
+No = c("None", "Auto traffic signal - out", "Auto signal part defective", "Road sign or marking defective or obscured", "Roadworks", "Oil or diesel", "Mud"),
+UNK = c("Data missing or out of range")
+)
+
+accidents$SiteIssue_Mud <- fct_collapse(accidents$SpecialCond,
+Yes = c("Mud"),
+No = c("None", "Auto traffic signal - out", "Auto signal part defective", "Road sign or marking defective or obscured", "Roadworks", "Road surface defective", "Oil or diesel"),
+UNK = c("Data missing or out of range")
+)
+
+accidents$SiteIssue_Oil <- fct_collapse(accidents$SpecialCond,
+Yes = c("Oil or diesel"),
+No = c("None", "Auto traffic signal - out", "Auto signal part defective", "Road sign or marking defective or obscured", "Roadworks", "Road surface defective", "Mud"),
+UNK = c("Data missing or out of range")
+)
+
+```
+
+
+
+```{r}
+# Relabel the Carriageway_Hazards
+accidents$Hazards <- factor(accidents$Carriageway_Hazards,
+                                       levels= c(0,1,2,3,4,5,6,7,-1),
+                                       labels= c("None","Vehicle load on road", "Other object on road", "Previous accident", "Dog on road", "Other animal on road", "Pedestrian in carriageway - not injured", "Any animal in carriageway (except ridden horse)", "Data missing or out of range"))
+fct_count(accidents$Hazards)
+
+accidents$Hazard_Animal <- fct_collapse(accidents$Hazards,
+Yes = c("Dog on road", "Other animal on road", "Any animal in carriageway (except ridden horse)"),
+No = c("None","Vehicle load on road", "Other object on road", "Previous accident", "Pedestrian in carriageway - not injured"),
+UNK = c("Data missing or out of range")
+)
+
+accidents$Hazard_Ped <- fct_collapse(accidents$Hazards,
+Yes = c("Pedestrian in carriageway - not injured"),
+No = c("None","Vehicle load on road", "Other object on road", "Previous accident", "Dog on road", "Other animal on road", "Any animal in carriageway (except ridden horse)"),
+UNK = c("Data missing or out of range")
+)
+
+accidents$Hazard_Object <- fct_collapse(accidents$Hazards,
+Yes = c("Vehicle load on road", "Other object on road"),
+No = c("None","Previous accident", "Dog on road", "Other animal on road", "Pedestrian in carriageway - not injured", "Any animal in carriageway (except ridden horse)"),
+UNK = c("Data missing or out of range")
+)
+
+accidents$Hazard_PrevAcc <- fct_collapse(accidents$Hazards,
+Yes = c("Previous accident"),
+No = c("None","Vehicle load on road", "Other object on road", "Dog on road", "Other animal on road", "Pedestrian in carriageway - not injured", "Any animal in carriageway (except ridden horse)"),
+UNK = c("Data missing or out of range")
+)
+fct_count(accidents$Hazard_PrevAcc)
+
+
+```
+
+
+```{r}
+# Relabel the Urban_or_Rural_Area
+accidents$UrbanRural <- factor(accidents$Urban_or_Rural_Area,
+                                       levels= c(1,2,3),
+                                       labels= c("Urban", "Rural", "Unallocated"))
+levels(accidents$UrbanRural)
+```
+

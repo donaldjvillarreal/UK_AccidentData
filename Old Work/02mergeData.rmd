@@ -1,0 +1,80 @@
+---
+title: "mergeData"
+author: "Richard Gower"
+date: "July 7, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r }
+
+load(file="datafiles\\accidents.2005_2014.rda")
+load(file="datafiles\\accidents.2015.rda")
+load(file="datafiles\\accidents.2016.rda")
+load(file="datafiles\\casualties.2005_2014.rda")
+load(file="datafiles\\casualties.2015.rda")
+load(file="datafiles\\casualties.2016.rda")
+load(file="datafiles\\vehicles.2005_2014.rda")
+load(file="datafiles\\vehicles.2015.rda")
+load(file="datafiles\\vehicles.2016.rda")
+
+accidents.raw = rbind(accidents.2005_2014, accidents.2015, accidents.2016)
+casualties.raw = rbind(casualties.2005_2014, casualties.2015[,-16], casualties.2016[,-16])
+vehicles.raw = rbind(vehicles.2005_2014, vehicles.2015[,-23], vehicles.2016[,-23])
+
+save(accidents.raw, file="datafiles\\accidents.raw.rda")
+save(casualties.raw, file="datafiles\\casualties.raw.rda")
+save(vehicles.raw, file="datafiles\\vehicles.raw.rda")
+```
+```{r}
+load(file="datafiles\\makeModel.2004_2008.rda")
+load(file="datafiles\\makeModel.2009.rda")
+load(file="datafiles\\makeModel.2010.rda")
+load(file="datafiles\\makeModel.2011.rda")
+load(file="datafiles\\makeModel.2012.rda")
+load(file="datafiles\\makeModel.2013.rda")
+load(file="datafiles\\makeModel.2014.rda")
+load(file="datafiles\\makeModel.2015.rda")
+load(file="datafiles\\makeModel.2016.rda")
+
+makeModel.raw = rbind(makeModel.2004_2008, makeModel.2009, makeModel.2010, 
+                  makeModel.2011, makeModel.2012, 
+                  makeModel.2013, makeModel.2014,
+                  makeModel.2015, makeModel.2016)
+save(makeModel.raw, file="datafiles\\makeModel.raw.rda")
+```
+
+```{r}
+rm(accidents.2005_2014)
+rm(accidents.2015)
+rm(accidents.2016)
+
+rm(casualties.2005_2014)
+rm(casualties.2015)
+rm(casualties.2016)
+
+rm(vehicles.2005_2014)
+rm(vehicles.2015)
+rm(vehicles.2016)
+
+rm(makeModel.2004_2008)
+rm(makeModel.2009)
+rm(makeModel.2010)
+rm(makeModel.2011)
+rm(makeModel.2012)
+rm(makeModel.2013)
+rm(makeModel.2014)
+rm(makeModel.2015)
+rm(makeModel.2016)
+```
+
+

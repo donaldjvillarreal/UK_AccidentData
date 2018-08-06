@@ -1,0 +1,86 @@
+---
+title: "Prep Data for Project"
+author: "Richard Gower"
+date: "July 7, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## get the lookup data
+
+Read in the look up tables and create a single dataset with all the values
+
+```{r dataPrep}
+# read original file
+library(xlsx)
+wd <- getwd()  # gets the working directory
+file <- paste(wd,"Data\\Road-Accident-Safety-Data-Guide.xls", sep="/") # create path and file name
+
+wb = loadWorkbook(file)
+ws = getSheets(wb)
+ 
+lookupsTemp = data.frame(code=as.character(),
+                          label=character(),
+                         field=character(),
+                         dataType=character())
+
+for (sheetNum in (3:length(ws))){
+  print(paste("Processing sheet:", names(ws)[sheetNum]))
+  readSheet <- read.xlsx(file, sheetIndex=sheetNum, header=TRUE )
+    colnames(readSheet)[1] = 'code'
+    colnames(readSheet)[2] = 'label'
+  #print(readSheet)
+  readSheet$label = as.character(readSheet$label)
+
+  if (is.numeric(readSheet$code)) {
+    readSheet$dataType = 'numeric'
+    readSheet$numCode = as.numeric(readSheet$code)
+  }
+  else {
+    readSheet$dataType = 'character'
+    readSheet$numCode = 0
+  }
+  readSheet$code = as.character(readSheet$code)
+
+  
+  readSheet$fieldName = names(ws)[sheetNum] 
+  readSheet$fieldName[readSheet$fieldName == "Did Police Officer Attend Scene"] = "Did Police Officer Attend Scene of Accident"
+  readSheet$fieldName[readSheet$fieldName == "Pedestrian Crossing.Human Contr"] = "Pedestrian Crossing.Human Control"
+  readSheet$fieldName[readSheet$fieldName == "Pedestrian Crossing.Physical Fa"] = "Pedestrian Crossing.Physical Facilities"
+  readSheet$fieldName[readSheet$fieldName == "Local Authority (District)"] = "Local_Authority_.District." 
+  readSheet$fieldName[readSheet$fieldName == "Local Authority (Highway)"] = "Local_Authority_.Highway." 
+  readSheet$fieldName[readSheet$fieldName == "Vehicle Location Restricted Lan"] = "Vehicle Location Restricted Lane" 
+  readSheet$fieldName[readSheet$fieldName == "Pedestr Road Maintenance Worker"] = "Pedestrian Road Maintenance Worker"
+    
+
+  readSheet$field = gsub(" ", "_", readSheet$field)  
+
+  lookupsTemp = rbind(lookupsTemp, readSheet)
+  
+}
+toFactor = c('Accident Severity','X1st Road Class', 'Road Type',
+             'Junction Detail', 'Junction Control', 'X2nd Road Class',
+             'Pedestrian Crossing.Human Control','Pedestrian Crossing.Physical Facilities',
+             'Light Conditions','Weather Conditions','Road Surface Condition',
+             'Special Conditions at Site','Carriageway Hazards', 'Urban or Rural Area'
+             )
+lookupsTemp$toFactor = ifelse(is.element(lookupsTemp$fieldName,toFactor), TRUE, FALSE)
+
+lookups = lookupsTemp[c('field', 'fieldName', 'code','numCode', 'label', 'dataType', 'toFactor')]
+save(lookups, file='datafiles\\lookups.rda')
+
+```
+```{r}
+#rm(lookups)
+rm(lookupsTemp)
+rm(readSheet)
+rm(wb)
+rm(ws)
+rm(file)
+rm(sheetNum)
+rm(wd)
+```
+

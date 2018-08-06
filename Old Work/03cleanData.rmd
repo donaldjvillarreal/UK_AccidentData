@@ -1,0 +1,109 @@
+---
+title: "cleanData"
+author: "RIchard Gower"
+date: "July 7, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## clean the data
+
+
+```{r }
+#
+# get the data
+#
+getwd()
+load(file="datafiles\\makeModel.raw.rda")
+load(file="datafiles\\accidents.raw.rda")
+load(file="datafiles\\casualties.raw.rda")
+load(file="datafiles\\vehicles.raw.rda")
+load(file="datafiles\\lookups.rda")
+
+
+accidents.clean = accidents.raw
+casualties.clean = casualties.raw
+vehicles.clean = vehicles.raw
+makeModel.clean = makeModel.raw
+
+```
+
+```{r}
+# turn into US date
+accidents.clean$Date <- as.Date(accidents.clean$Date, "%d/%m/%Y")
+# Extract the month and create a month field
+accidents.clean$month <- format(accidents.clean$Date, format="%B")
+accidents.clean$month <- as.factor(accidents.clean$month)
+accidents.clean$month <- factor(accidents.clean$month,levels=month.name)
+summary(accidents.clean$month)
+```
+
+```{r}
+accidents.clean$day <- format(accidents.clean$Date, format="%A")
+accidents.clean$day <- factor(accidents.clean$day, 
+                            levels=c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"),
+                        labels=c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"))
+summary(accidents.clean$day)
+```
+
+
+```{r}
+# Add an hour band variable
+accidents.clean$Time <- gsub("[ [:punct:]]", "" , accidents.clean$Time) # remove punctuation from 'Time' variable
+accidents.clean$Time <- gsub("(\\d\\d)(\\d\\d)", "\\1:\\2", accidents.clean$Time) # add a colon after 2nd value
+accidents.clean$hour<- as.POSIXlt(accidents.clean$Time, format="%H:%M")$hour # add a new column called 'hour' with hours band
+summary(accidents.clean$Time)
+summary(accidents.clean$hour)
+```
+
+```{r}
+# Relabel the 'Accident_Severity' categories
+accidents.clean$Accident_Severity2 = accidents.clean$Accident_Severity
+accidents.clean$Accident_Severity <- factor(accidents.clean$Accident_Severity,
+                                      levels= c(1,2,3),
+                                      labels= c("Fatal", "Serious", "Slight"))
+levels(accidents.clean$Accident_Severity)
+
+summary(accidents.clean$Accident_Severity)
+```
+
+```{r}
+accidents.clean = accidents.raw
+load(file='datafiles\\lookups.rda')
+myFields = names(accidents.clean)
+colNum = 1
+for (iField in myFields){
+  thisField = gsub("_"," ",iField)
+  #print(thisField)
+  myLevels = lookups[lookups$field == thisField & lookups$toFactor == TRUE,c(3)] 
+  if (length(myLevels) > 0){
+    print(paste("Factoring:",iField, "colNum", colNum))
+    myLabels = lookups[lookups$field == thisField,c(4)]
+    accidents.clean[, c(colNum)] = factor(accidents.clean[,c(colNum)],
+                                      levels= myLevels,
+                                      labels= myLabels)
+  }
+  colNum = colNum + 1
+}
+
+
+levels(accidents.clean$Accident_Severity)
+
+summary(accidents.clean$Accident_Severity)
+```
+```{r}
+save(accidents.clean, file="datafiles\\accidents.clean.rda")
+save(casualties.clean, file="datafiles\\casualties.clean.rda")
+save(vehicles.clean, file="datafiles\\vehicles.clean.rda")
+save(makeModel.clean, file="datafiles\\makeModel.clean.rda")
+```
+```{r}
+rm(accidents.raw)
+rm(casualties.raw)
+rm(vehicles.raw)
+rm(makeModel.raw)
+```
+

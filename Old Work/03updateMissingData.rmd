@@ -1,0 +1,74 @@
+---
+title: "Update Missing Data"
+author: "RIchard Gower"
+date: "July 15, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r }
+load(file="datafiles\\accidents.raw.rda")
+acc = accidents.raw
+rm(accidents.raw)
+load(file="datafiles\\casualties.raw.rda")
+cas = casualties.raw
+rm(casualties.raw)
+load(file="datafiles\\vehicles.raw.rda")
+veh = vehicles.raw
+rm(vehicles.raw)
+load(file="datafiles\\lookups.rda")
+load(file="datafiles\\fieldDescriptions.rda")
+
+inTables = c("accidents","casualties","vehicles")
+
+for(inTable in inTables){
+  print(paste("Process table:", inTable))
+  if (inTable == "accidents"){
+      columnNames = colnames(acc)
+      totalCount = nrow(acc[,])
+  }
+  else if (inTable == "casualties"){
+      columnNames = colnames(cas)
+      totalCount = nrow(cas[,])
+  }
+  else if (inTable == "vehicles"){
+      columnNames = colnames(veh)
+      totalCount = nrow(veh[,])
+  }
+  for (inField in columnNames){
+    missingSymbol = fieldDescriptions[fieldDescriptions$Table == inTable & fieldDescriptions$FieldName == inField,"MissingValue"]
+    if (missingSymbol != "NA") {
+      if (is.numeric(missingSymbol) == TRUE){
+        missingSymbol = as.numeric(missingSymbol)
+      }
+      #print(missingSymbol)
+      if (inTable == "accidents"){
+        missingCount = nrow(acc[acc[[inField]] == missingSymbol,])
+      }
+      else if (inTable == "casualties"){
+        missingCount = nrow(cas[cas[[inField]] == missingSymbol,])
+      }
+      else if (inTable == "vehicles"){
+        missingCount = nrow(veh[veh[[inField]] == missingSymbol,])
+      }
+      
+      missingPercent = round((missingCount*100)/totalCount,2)
+      print(paste(inField, "is missing", missingCount, "out of", totalCount, "for", missingPercent, "%"))
+
+      fieldDescriptions[fieldDescriptions$Table == inTable & fieldDescriptions$FieldName == inField,"MissingCount"] = missingCount
+      fieldDescriptions[fieldDescriptions$Table == inTable & fieldDescriptions$FieldName == inField,"MissingPercent"] = missingPercent
+    }
+  }
+}
+save(fieldDescriptions, file='datafiles\\fieldDescriptions.rda')
+```
+

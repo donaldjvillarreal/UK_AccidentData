@@ -1,0 +1,83 @@
+---
+title: "Untitled"
+author: "Wright, Aaron"
+date: "July 13, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library("dplyr")
+```
+
+## Feature creation from Vehicle file
+
+
+```{r}
+#Pedal cycle, Motorcycle (all sizes), Electric motorcycle
+vehicles$vehMotoInd <- as.numeric(vehicles$Vehicle_Type %in% c(1,2,3,4,5,23,97))
+#Tram
+vehicles$vehTramInd <- as.numeric(vehicles$Vehicle_Type %in% c(18))
+#All towing except None and Unknown
+vehicles$vehTowingInd <- as.numeric(vehicles$Towing_and_Articulation %in% c(1,2,3,4,5))
+#U-turn, Turning Left, Turning Right
+vehicles$vehTurningInd <- as.numeric(vehicles$Vehicle_Manoeuvre %in% c(6,7,9))
+#Parked, Waiting to go - held up, Slowing or stopping, Waiting to turn left, Waiting to turn left, Waiting to turn right
+vehicles$vehStoppedInd <- as.numeric(vehicles$Vehicle_Manoeuvre %in% c(2,3,4,8,10))
+#All skidding and overturning except None and Missing
+vehicles$vehSkiddingInd <- as.numeric(vehicles$Skidding_and_Overturning %in% c(1,2,3,4,5))
+#All skidding and overturning except None and Missing
+vehicles$vehSkiddingInd <- as.numeric(vehicles$Skidding_and_Overturning %in% c(1,2,3,4,5))
+#All vehicles leaving carriageway
+vehicles$vehLeavingInd <- as.numeric(vehicles$Vehicle_Leaving_Carriageway %in% c(1,2,3,4,5,6,7,8))
+#Front point of impact
+vehicles$vehFrontImpInd <- as.numeric(vehicles$X1st_Point_of_Impact %in% c(1))
+#Front point of impact
+vehicles$vehBackImpInd <- as.numeric(vehicles$X1st_Point_of_Impact %in% c(2))
+#Front point of impact
+vehicles$vehSideImpInd <- as.numeric(vehicles$X1st_Point_of_Impact %in% c(3,4))
+#Was Vehicle Left Hand Drive
+vehicles$vehLeftDrInd <- as.numeric(vehicles$Was_Vehicle_Left_Hand_Drive. %in% c(3,4))
+```
+
+
+```{r}
+
+#summarize the vehicle file by Accident_Index and create an index per accident using max
+veh.temp <- group_by(vehicles, Accident_Index)
+vehicle.lookup <- summarize(veh.temp, vehMotoInd = max(vehMotoInd), vehTramInd = max(vehTramInd),
+                            vehTowingInd=max(vehTowingInd), vehTurningInd=max(vehTurningInd),
+                            vehStoppedInd=max(vehStoppedInd), vehSkiddingInd=max(vehSkiddingInd),
+                            vehLeavingInd=max(vehLeavingInd), vehFrontImpInd=max(vehFrontImpInd),
+                            vehBackImpInd=max(vehBackImpInd), vehSideImpInd=max(vehSideImpInd),
+                            vehLeftDrInd=max(vehLeftDrInd))
+head(vehicle.lookup)
+
+```
+
+```{r}
+#create factor versions of variables
+vehicle.lookup$vehMotoInd <- factor(vehicle.lookup$vehMotoInd,levels= c(0,1),labels= c("None", "One+"))
+vehicle.lookup$vehTramInd <- factor(vehicle.lookup$vehTramInd,levels= c(0,1),labels= c("None", "One+"))
+vehicle.lookup$vehTowingInd <- factor(vehicle.lookup$vehTowingInd,levels= c(0,1),labels= c("None", "One+"))
+vehicle.lookup$vehTurningInd <- factor(vehicle.lookup$vehTurningInd,levels= c(0,1),labels= c("None", "One+"))
+vehicle.lookup$vehStoppedInd <- factor(vehicle.lookup$vehStoppedInd,levels= c(0,1),labels= c("None", "One+"))
+vehicle.lookup$vehSkiddingInd <- factor(vehicle.lookup$vehSkiddingInd,levels= c(0,1),labels= c("None", "One+"))
+vehicle.lookup$vehLeavingInd <- factor(vehicle.lookup$vehLeavingInd,levels= c(0,1),labels= c("None", "One+"))
+vehicle.lookup$vehFrontImpInd <- factor(vehicle.lookup$vehFrontImpInd,levels= c(0,1),labels= c("None", "One+"))
+vehicle.lookup$vehBackImpInd <- factor(vehicle.lookup$vehBackImpInd,levels= c(0,1),labels= c("None", "One+"))
+vehicle.lookup$vehSideImpInd <- factor(vehicle.lookup$vehSideImpInd,levels= c(0,1),labels= c("None", "One+"))
+vehicle.lookup$vehLeftDrInd <- factor(vehicle.lookup$vehLeftDrInd,levels= c(0,1),labels= c("None", "One+"))
+
+```
+
+```{r}
+
+#left join on accidents file to pull in all of the vehicle indicators
+accidents <- merge(accidents,vehicle.lookup,by="Accident_Index", all.x=TRUE)
+
+#Clean up temporary data frames
+rm(vehicle.lookup)
+rm(veh.temp)
+
+```

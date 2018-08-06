@@ -1,0 +1,36 @@
+---
+title: "Build the NZV "
+author: "Richard Gower"
+date: "July 7, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## get the lookup data
+
+Read in the description tables 
+
+```{r dataPrep}
+# read original file
+
+
+library(dplyr)
+
+load(file="datafiles\\fieldDescriptions.raw.rda")
+load(file="datafiles\\fieldNZV.rda")
+
+fieldDescriptions =left_join(fieldDescriptions.raw, fieldNZV, by = c("Table" = "TableName", "FieldName" = "FieldName"))
+
+fieldDescriptions = fieldDescriptions[c('Table','FieldName','Type', 'Sample', 'Description', 'Values', 'Lookups','MissingValue', 'MissingCount', 'MissingPercent', 'SuspectData', 'Comments', 'Actions', "nzv", "freqRatio", "percentUnique" )]
+
+save(fieldDescriptions, file='datafiles\\fieldDescriptions.rda')
+
+```
+```{r}
+#rm(lookups)
+
+```
+
